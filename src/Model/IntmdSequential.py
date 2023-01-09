@@ -16,4 +16,3 @@ class IntermediateSequential(nn.Sequential):
             output = intermediate_outputs[name] = module(output)
 
         return output, intermediate_outputs
-        

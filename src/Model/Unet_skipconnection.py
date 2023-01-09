@@ -3,18 +3,16 @@ import torch.nn.functional as F
 import torch
 
 
-
-def normalization(planes, norm='gn'):
-    if norm == 'bn':
+def normalization(planes, norm="gn"):
+    if norm == "bn":
         m = nn.BatchNorm3d(planes)
-    elif norm == 'gn':
+    elif norm == "gn":
         m = nn.GroupNorm(8, planes)
-    elif norm == 'in':
+    elif norm == "in":
         m = nn.InstanceNorm3d(planes)
     else:
-        raise ValueError('normalization type {} is not supported'.format(norm))
+        raise ValueError("normalization type {} is not supported".format(norm))
     return m
-
 
 
 class InitConv(nn.Module):
@@ -32,7 +30,7 @@ class InitConv(nn.Module):
 
 
 class EnBlock(nn.Module):
-    def __init__(self, in_channels, norm='gn'):
+    def __init__(self, in_channels, norm="gn"):
         super(EnBlock, self).__init__()
 
         self.bn1 = normalization(in_channels, norm=norm)
@@ -54,7 +52,7 @@ class EnBlock(nn.Module):
 
         return y
 
-    
+
 class DACblock(nn.Module):
     def __init__(self, channel):
         super(DACblock, self).__init__()
@@ -71,11 +69,14 @@ class DACblock(nn.Module):
         dilate1_out = nonlinearity(self.dilate1(x))
         dilate2_out = nonlinearity(self.conv1x1(self.dilate2(x)))
         dilate3_out = nonlinearity(self.conv1x1(self.dilate2(self.dilate1(x))))
-        dilate4_out = nonlinearity(self.conv1x1(self.dilate3(self.dilate2(self.dilate1(x)))))
+        dilate4_out = nonlinearity(
+            self.conv1x1(self.dilate3(self.dilate2(self.dilate1(x))))
+        )
         out = x + dilate1_out + dilate2_out + dilate3_out + dilate4_out
         return out
-    
- class SPPblock(nn.Module):
+
+
+class SPPblock(nn.Module):
     def __init__(self, in_channels):
         super(SPPblock, self).__init__()
         self.pool1 = nn.MaxPool2d(kernel_size=[2, 2], stride=2)
@@ -83,21 +84,23 @@ class DACblock(nn.Module):
         self.pool3 = nn.MaxPool2d(kernel_size=[5, 5], stride=5)
         self.pool4 = nn.MaxPool2d(kernel_size=[6, 6], stride=6)
 
-        self.conv = nn.Conv2d(in_channels=in_channels, out_channels=1, kernel_size=1, padding=0)
+        self.conv = nn.Conv2d(
+            in_channels=in_channels, out_channels=1, kernel_size=1, padding=0
+        )
 
     def forward(self, x):
         self.in_channels, h, w = x.size(1), x.size(2), x.size(3)
-        self.layer1 = F.upsample(self.conv(self.pool1(x)), size=(h, w), mode='bilinear')
-        self.layer2 = F.upsample(self.conv(self.pool2(x)), size=(h, w), mode='bilinear')
-        self.layer3 = F.upsample(self.conv(self.pool3(x)), size=(h, w), mode='bilinear')
-        self.layer4 = F.upsample(self.conv(self.pool4(x)), size=(h, w), mode='bilinear')
-        print('x.size(1)',x.size(1))
-        print('x.size(2)',x.size(2))
-        print('x.size(3)',x.size(3))
-        print('self.layer1',self.layer1.shape)
-        print('self.layer2',self.layer2.shape)
-        print('self.layer3',self.layer3.shape)
-        print('self.layer4',self.layer4.shape)
+        self.layer1 = F.upsample(self.conv(self.pool1(x)), size=(h, w), mode="bilinear")
+        self.layer2 = F.upsample(self.conv(self.pool2(x)), size=(h, w), mode="bilinear")
+        self.layer3 = F.upsample(self.conv(self.pool3(x)), size=(h, w), mode="bilinear")
+        self.layer4 = F.upsample(self.conv(self.pool4(x)), size=(h, w), mode="bilinear")
+        print("x.size(1)", x.size(1))
+        print("x.size(2)", x.size(2))
+        print("x.size(3)", x.size(3))
+        print("self.layer1", self.layer1.shape)
+        print("self.layer2", self.layer2.shape)
+        print("self.layer3", self.layer3.shape)
+        print("self.layer4", self.layer4.shape)
 
         out = torch.cat([self.layer1, self.layer2, self.layer3, self.layer4, x], 1)
         # print('out',out.shape)
@@ -108,7 +111,9 @@ class DACblock(nn.Module):
 class EnDown(nn.Module):
     def __init__(self, in_channels, out_channels):
         super(EnDown, self).__init__()
-        self.conv = nn.Conv3d(in_channels, out_channels, kernel_size=3, stride=2, padding=1)
+        self.conv = nn.Conv3d(
+            in_channels, out_channels, kernel_size=3, stride=2, padding=1
+        )
 
     def forward(self, x):
         y = self.conv(x)
@@ -116,39 +121,43 @@ class EnDown(nn.Module):
         return y
 
 
-
 class Unet(nn.Module):
     def __init__(self, in_channels=4, base_channels=16, num_classes=4):
         super(Unet, self).__init__()
 
-        self.InitConv = InitConv(in_channels=in_channels, out_channels=base_channels, dropout=0.2)
+        self.InitConv = InitConv(
+            in_channels=in_channels, out_channels=base_channels, dropout=0.2
+        )
         self.EnBlock1 = EnBlock(in_channels=base_channels)
-        self.EnDown1 = EnDown(in_channels=base_channels, out_channels=base_channels*2)
-        self.dblock = DACblock(out_channels=base_channels*2)
-        self.spp = SPPblock(out_channels=base_channels*2)
+        self.EnDown1 = EnDown(in_channels=base_channels, out_channels=base_channels * 2)
+        self.dblock = DACblock(out_channels=base_channels * 2)
+        self.spp = SPPblock(out_channels=base_channels * 2)
 
-
-        self.EnBlock2_1 = EnBlock(in_channels=base_channels*2)
-        self.EnBlock2_2 = EnBlock(in_channels=base_channels*2)
-        self.EnDown2 = EnDown(in_channels=base_channels*2, out_channels=base_channels*4)
-        self.dblock = DACblock(out_channels=base_channels*4)
-        self.spp = SPPblock(out_channels=base_channels*4)
+        self.EnBlock2_1 = EnBlock(in_channels=base_channels * 2)
+        self.EnBlock2_2 = EnBlock(in_channels=base_channels * 2)
+        self.EnDown2 = EnDown(
+            in_channels=base_channels * 2, out_channels=base_channels * 4
+        )
+        self.dblock = DACblock(out_channels=base_channels * 4)
+        self.spp = SPPblock(out_channels=base_channels * 4)
 
         self.EnBlock3_1 = EnBlock(in_channels=base_channels * 4)
         self.EnBlock3_2 = EnBlock(in_channels=base_channels * 4)
-        self.EnDown3 = EnDown(in_channels=base_channels*4, out_channels=base_channels*8)
-        self.dblock = DACblock(out_channels=base_channels*8)
-        self.spp = SPPblock(out_channels=base_channels*8)
+        self.EnDown3 = EnDown(
+            in_channels=base_channels * 4, out_channels=base_channels * 8
+        )
+        self.dblock = DACblock(out_channels=base_channels * 8)
+        self.spp = SPPblock(out_channels=base_channels * 8)
 
         self.EnBlock4_1 = EnBlock(in_channels=base_channels * 8)
         self.EnBlock4_2 = EnBlock(in_channels=base_channels * 8)
         self.EnBlock4_3 = EnBlock(in_channels=base_channels * 8)
         self.EnBlock4_4 = EnBlock(in_channels=base_channels * 8)
-        self.dblock = DACblock(out_channels=base_channels*8)
-        self.spp = SPPblock(out_channels=base_channels*8)
+        self.dblock = DACblock(out_channels=base_channels * 8)
+        self.spp = SPPblock(out_channels=base_channels * 8)
 
     def forward(self, x):
-        x = self.InitConv(x)       # (1, 16, 128, 128, 128)
+        x = self.InitConv(x)  # (1, 16, 128, 128, 128)
 
         x1_1 = self.EnBlock1(x)
         x1_2 = self.EnDown1(x1_1)  # (1, 32, 64, 64, 64)
@@ -174,14 +183,15 @@ class Unet(nn.Module):
         x2_2 = self.dblock(x4_3)
         x2_2 = self.spp(x4_3)
 
-        return x1_1,x2_1,x3_1,output
+        return x1_1, x2_1, x3_1, output
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     with torch.no_grad():
         import os
-        os.environ['CUDA_VISIBLE_DEVICES'] = '1'
-        cuda0 = torch.device('cuda:0')
+
+        os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+        cuda0 = torch.device("cuda:0")
         x = torch.rand((1, 4, 128, 128, 128), device=cuda0)
         # model = Unet1(in_channels=4, base_channels=16, num_classes=4)
         model = Unet(in_channels=4, base_channels=16, num_classes=4)

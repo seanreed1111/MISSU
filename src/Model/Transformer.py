@@ -8,14 +8,13 @@ class GELU(nn.Module):
     def forward(self, input: Tensor) -> Tensor:
         return F.gelu(input)
 
+
 class SelfAttention(nn.Module):
-    def __init__(
-        self, dim, heads=4, qkv_bias=False, qk_scale=None, dropout_rate=0.0
-    ):
+    def __init__(self, dim, heads=4, qkv_bias=False, qk_scale=None, dropout_rate=0.0):
         super().__init__()
         self.num_heads = heads
         head_dim = dim // heads
-        self.scale = qk_scale or head_dim ** -0.5
+        self.scale = qk_scale or head_dim**-0.5
 
         self.qkv = nn.Linear(dim, dim * 3, bias=qkv_bias)
         self.attn_drop = nn.Dropout(dropout_rate)
@@ -109,17 +108,16 @@ class TransformerModel(nn.Module):
                         PreNormDrop(
                             dim,
                             dropout_rate,
-                            SelfAttention(dim, heads=heads, dropout_rate=attn_dropout_rate),
+                            SelfAttention(
+                                dim, heads=heads, dropout_rate=attn_dropout_rate
+                            ),
                         )
                     ),
-                    Residual(
-                        PreNorm(dim, FeedForward(dim, mlp_dim, dropout_rate))
-                    ),
+                    Residual(PreNorm(dim, FeedForward(dim, mlp_dim, dropout_rate))),
                 ]
             )
             # dim = dim / 2
         self.net = IntermediateSequential(*layers)
-
 
     def forward(self, x):
         return self.net(x)

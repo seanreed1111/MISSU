@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 
+
 class FixedPositionalEncoding(nn.Module):
     def __init__(self, embedding_dim, max_length=512):
         super(FixedPositionalEncoding, self).__init__()
@@ -14,7 +15,7 @@ class FixedPositionalEncoding(nn.Module):
         pe[:, 0::2] = torch.sin(position * div_term)
         pe[:, 1::2] = torch.cos(position * div_term)
         pe = pe.unsqueeze(0).transpose(0, 1)
-        self.register_buffer('pe', pe)
+        self.register_buffer("pe", pe)
 
     def forward(self, x):
         x = x + self.pe[: x.size(0), :]
@@ -25,7 +26,7 @@ class LearnedPositionalEncoding(nn.Module):
     def __init__(self, max_position_embeddings, embedding_dim, seq_length):
         super(LearnedPositionalEncoding, self).__init__()
 
-        self.position_embeddings = nn.Parameter(torch.zeros(1, 4096, 512)) #8x
+        self.position_embeddings = nn.Parameter(torch.zeros(1, 4096, 512))  # 8x
 
     def forward(self, x, position_ids=None):
 
