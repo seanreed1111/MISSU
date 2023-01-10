@@ -1,11 +1,11 @@
 import torch
 import torch.nn as nn
-from Model.Transformer import TransformerModel
-from Model.PositionalEncoding import FixedPositionalEncoding, LearnedPositionalEncoding
-from Model.Unet_skipconnection import Unet
+from Transformer import TransformerModel
+from PositionalEncoding import FixedPositionalEncoding, LearnedPositionalEncoding
+from Unet_skipconnection import Unet
 from functools import partial
 import torch.nn.functional as F
-from ..loggers import create_python_logger
+from loggers import create_python_logger
 
 nonlinearity = partial(F.relu, inplace=True)
 
@@ -397,3 +397,4 @@ if __name__ == "__main__":
         y = model(x)
         pylogger.debug(f"input shape = {x.shape}")
         pylogger.debug(f"output shape = {y.shape}")
+        pylogger.debug(f"model summary = {model}")

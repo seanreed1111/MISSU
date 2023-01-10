@@ -9,13 +9,13 @@ import setproctitle
 import torch
 import torch.backends.cudnn as cudnn
 import torch.optim
-from Model.MISSU_skipconnection import MISSU
+from MISSU_skipconnection import MISSU
 import torch.distributed as dist
-from Model import criterions
+import criterions
 
 # from data.BraTS import BraTS
 from torch.utils.data import DataLoader
-from utils.tools import all_reduce_tensor
+from tool import all_reduce_tensor
 from tensorboardX import SummaryWriter
 from torch import nn
 import torchvision
