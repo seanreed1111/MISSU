@@ -5,8 +5,11 @@ from Model.PositionalEncoding import FixedPositionalEncoding, LearnedPositionalE
 from Model.Unet_skipconnection import Unet
 from functools import partial
 import torch.nn.functional as F
+from ..loggers import create_python_logger
 
 nonlinearity = partial(F.relu, inplace=True)
+
+pylogger - create_python_logger(__name__)
 
 
 class TransformerSSU(nn.Module):
@@ -386,10 +389,11 @@ if __name__ == "__main__":
     with torch.no_grad():
         import os
 
-        os.environ["CUDA_VISIBLE_DEVICES"] = "0,1"
+        os.environ["CUDA_VISIBLE_DEVICES"] = "0"
         cuda0 = torch.device("cuda:0")
         x = torch.rand((1, 4, 128, 128, 128), device=cuda0)
         _, model = MISSU(dataset="brats", _conv_repr=True, _pe_type="learned")
         model.cuda()
         y = model(x)
-        print(y.shape)
+        pylogger.debug(f"input shape = {x.shape}")
+        pylogger.debug(f"output shape = {y.shape}")

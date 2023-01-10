@@ -13,7 +13,8 @@ import torch.optim
 from torch.utils.data import DataLoader
 
 from data.BraTS import BraTS
-from predict import validate_softmax
+
+# from predict import validate_softmax # from  https://github.com/China-LiuXiaopeng/BraTS-DMFNet/blob/master/predict.py
 from models.MISSU.MISSU_downsample8x_skipconnection import MISSU
 
 

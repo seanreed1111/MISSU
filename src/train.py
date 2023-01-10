@@ -9,11 +9,11 @@ import setproctitle
 import torch
 import torch.backends.cudnn as cudnn
 import torch.optim
-from models.MISSU_skipconnection import MISSU
+from Model.MISSU_skipconnection import MISSU
 import torch.distributed as dist
-from models import criterions
+from Model import criterions
 
-from data.BraTS import BraTS
+# from data.BraTS import BraTS
 from torch.utils.data import DataLoader
 from utils.tools import all_reduce_tensor
 from tensorboardX import SummaryWriter
@@ -83,7 +83,7 @@ parser.add_argument("--seed", default=1000, type=int)
 
 parser.add_argument("--no_cuda", default=False, type=bool)
 
-parser.add_argument("--gpu", default="0,1", type=str)
+parser.add_argument("--gpu", default="0", type=str)
 
 parser.add_argument("--num_workers", default=2, type=int)
 
@@ -91,9 +91,9 @@ parser.add_argument("--batch_size", default=2, type=int)
 
 parser.add_argument("--start_epoch", default=0, type=int)
 
-parser.add_argument("--end_epoch", default=500, type=int)
+parser.add_argument("--end_epoch", default=1, type=int)
 
-parser.add_argument("--save_freq", default=500, type=int)
+parser.add_argument("--save_freq", default=20, type=int)
 
 parser.add_argument("--resume", default="", type=str)
 
