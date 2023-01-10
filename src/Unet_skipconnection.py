@@ -60,16 +60,21 @@ class DACblock(nn.Module):
         self.dilate2 = nn.Conv2d(channel, channel, kernel_size=3, dilation=3, padding=3)
         self.dilate3 = nn.Conv2d(channel, channel, kernel_size=3, dilation=5, padding=5)
         self.conv1x1 = nn.Conv2d(channel, channel, kernel_size=1, dilation=1, padding=0)
+        self.relu1 = nn.ReLU()
+        self.relu2 = nn.ReLU()
+        self.relu3 = nn.ReLU()
+        self.relu4 = nn.ReLU()
+
         for m in self.modules():
             if isinstance(m, nn.Conv2d) or isinstance(m, nn.ConvTranspose2d):
                 if m.bias is not None:
                     m.bias.data.zero_()
 
     def forward(self, x):
-        dilate1_out = nonlinearity(self.dilate1(x))
-        dilate2_out = nonlinearity(self.conv1x1(self.dilate2(x)))
-        dilate3_out = nonlinearity(self.conv1x1(self.dilate2(self.dilate1(x))))
-        dilate4_out = nonlinearity(
+        dilate1_out = self.relu1(self.dilate1(x))
+        dilate2_out = self.relu2(self.conv1x1(self.dilate2(x)))
+        dilate3_out = self.relu3(self.conv1x1(self.dilate2(self.dilate1(x))))
+        dilate4_out = self.relu4(
             self.conv1x1(self.dilate3(self.dilate2(self.dilate1(x))))
         )
         out = x + dilate1_out + dilate2_out + dilate3_out + dilate4_out
@@ -130,31 +135,31 @@ class Unet(nn.Module):
         )
         self.EnBlock1 = EnBlock(in_channels=base_channels)
         self.EnDown1 = EnDown(in_channels=base_channels, out_channels=base_channels * 2)
-        self.dblock = DACblock(out_channels=base_channels * 2)
-        self.spp = SPPblock(out_channels=base_channels * 2)
+        self.dblock = DACblock(channel=base_channels * 2)
+        self.spp = SPPblock(in_channels=base_channels * 2)
 
         self.EnBlock2_1 = EnBlock(in_channels=base_channels * 2)
         self.EnBlock2_2 = EnBlock(in_channels=base_channels * 2)
         self.EnDown2 = EnDown(
             in_channels=base_channels * 2, out_channels=base_channels * 4
         )
-        self.dblock = DACblock(out_channels=base_channels * 4)
-        self.spp = SPPblock(out_channels=base_channels * 4)
+        self.dblock = DACblock(channel=base_channels * 4)
+        self.spp = SPPblock(in_channels=base_channels * 4)
 
         self.EnBlock3_1 = EnBlock(in_channels=base_channels * 4)
         self.EnBlock3_2 = EnBlock(in_channels=base_channels * 4)
         self.EnDown3 = EnDown(
             in_channels=base_channels * 4, out_channels=base_channels * 8
         )
-        self.dblock = DACblock(out_channels=base_channels * 8)
-        self.spp = SPPblock(out_channels=base_channels * 8)
+        self.dblock = DACblock(channel=base_channels * 8)
+        self.spp = SPPblock(in_channels=base_channels * 8)
 
         self.EnBlock4_1 = EnBlock(in_channels=base_channels * 8)
         self.EnBlock4_2 = EnBlock(in_channels=base_channels * 8)
         self.EnBlock4_3 = EnBlock(in_channels=base_channels * 8)
         self.EnBlock4_4 = EnBlock(in_channels=base_channels * 8)
-        self.dblock = DACblock(out_channels=base_channels * 8)
-        self.spp = SPPblock(out_channels=base_channels * 8)
+        self.dblock = DACblock(channel=base_channels * 8)
+        self.spp = SPPblock(in_channels=base_channels * 8)
 
     def forward(self, x):
         x = self.InitConv(x)  # (1, 16, 128, 128, 128)
