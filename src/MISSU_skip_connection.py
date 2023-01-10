@@ -9,7 +9,7 @@ from loggers import create_python_logger
 
 nonlinearity = partial(F.relu, inplace=True)
 
-pylogger - create_python_logger(__name__)
+pylogger = create_python_logger(__name__)
 
 
 class TransformerSSU(nn.Module):
